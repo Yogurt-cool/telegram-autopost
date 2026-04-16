@@ -1,0 +1,67 @@
+name: Telegram Auto-Post (Simple)
+
+on:
+  schedule:
+    # Каждый день в 9:00 МСК (6:00 UTC)
+    - cron: '0 6 * * *'
+
+  # Можно запустить вручную
+  workflow_dispatch:
+
+jobs:
+  post:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+
+    - name: Install dependencies
+      run: |
+        pip install python-telegram-bot==21.0
+
+    - name: Restore logs
+      run: |
+        if [ -f photo_file_ids.json ]; then
+          echo "✅ Found photo database"
+          python -c "import json; data=json.load(open('photo_file_ids.json')); print(f'Photos in database: {len(data[\"photos\"])}')"
+        else
+          echo "❌ No photo database found!"
+          exit 1
+        fi
+
+        if [ -f used_photos.json ]; then
+          echo "✅ Found usage log"
+          python -c "import json; log=json.load(open('used_photos.json')); print(f'Used photos: {len(log[\"used_file_ids\"])}')"
+        else
+          echo "⚠️ No previous log, starting fresh"
+        fi
+
+    - name: Post to Telegram
+      run: |
+        python telegram_poster_simple.py
+      env:
+        TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+        PUBLIC_CHANNEL_ID: "-1003748668450"
+        PHOTOS_PER_POST: "5"
+        PYTHONUNBUFFERED: 1
+
+    - name: Commit logs
+      if: always()
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+
+        # Добавляем логи
+        if [ -f used_photos.json ]; then
+          git add used_photos.json
+        fi
+
+        # Коммитим если есть изменения
+        git diff --staged --quiet || git commit -m "📸 Daily post: $(date +'%Y-%m-%d')" || echo "No changes"
+        git push || echo "Push failed"
