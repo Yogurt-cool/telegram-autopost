@@ -141,11 +141,8 @@ async def main():
             print("❌ Не удалось выбрать фото")
             return False
 
-        # Подготовить подпись
-        caption = "📸 Ежедневная подборка"
-
-        # Опубликовать
-        messages = await post_to_channel(bot, selected_photos, caption)
+        # Опубликовать без подписи
+        messages = await post_to_channel(bot, selected_photos, caption=None)
 
         if not messages:
             print("❌ Не удалось опубликовать")
