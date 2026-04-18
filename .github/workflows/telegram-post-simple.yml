@@ -2,8 +2,8 @@ name: Telegram Auto-Post (Simple)
 
 on:
   schedule:
-    # Каждый день в 9:00 МСК (6:00 UTC)
-    - cron: '0 6 * * *'
+    # Каждый день в 9:00 МСК (6:00 UTC) - сдвинуто на :17 для меньшей нагрузки
+    - cron: '17 5 * * *'
 
   # Можно запустить вручную
   workflow_dispatch:
